@@ -349,19 +349,19 @@ module OmniAuth
         # If you're thinking that this looks ugly with the raw nil and boolean,
         # see https://github.com/jwt/ruby-jwt/issues/59.
         jwt_claims, jwt_header =
-          JWT.decode(id_token, nil, true, verify_options) do |header|
+          ::JWT.decode(id_token, nil, true, verify_options) do |header|
             # There should always be one key from the discovery endpoint that
             # matches the id in the JWT header.
             unless key = signing_keys.find{|k|
               k['kid'] == header['kid']
             }
-              fail JWT::VerificationError, 'No keys from key endpoint match the id token'
+              fail ::JWT::VerificationError, 'No keys from key endpoint match the id token'
             end
 
             # The key also contains other fields, such as n and e, that are
             # redundant. x5c is sufficient to verify the id token.
             if x5c = key['x5c'] and !x5c.empty?
-              OpenSSL::X509::Certificate.new(JWT::Decode.base64url_decode(x5c.first)).public_key
+              OpenSSL::X509::Certificate.new(::JWT::Decode.base64url_decode(x5c.first)).public_key
             # no x5c, so we resort to e and n
             elsif exp = key['e'] and mod = key['n']
               key = OpenSSL::PKey::RSA.new
@@ -377,11 +377,11 @@ module OmniAuth
               end
               key.public_key
             else
-              fail JWT::VerificationError, 'Key has no info for verification'
+              fail ::JWT::VerificationError, 'Key has no info for verification'
             end
           end
         return jwt_claims, jwt_header if jwt_claims['nonce'] == read_nonce
-        fail JWT::DecodeError, 'Returned nonce did not match.'
+        fail ::JWT::DecodeError, 'Returned nonce did not match.'
       end
 
       def openssl_bn_for(s)
@@ -407,9 +407,9 @@ module OmniAuth
         # This maps RS256 -> sha256, ES384 -> sha384, etc.
         algorithm = (header['alg'] || 'RS256').sub(/RS|ES|HS/, 'sha')
         full_hash = OpenSSL::Digest.new(algorithm).digest code
-        c_hash = JWT::Encode.base64url_encode full_hash[0..full_hash.length / 2 - 1]
+        c_hash = ::JWT::Encode.base64url_encode full_hash[0..full_hash.length / 2 - 1]
         return if c_hash == claims['c_hash']
-        fail JWT::VerificationError,
+        fail ::JWT::VerificationError,
              'c_hash in id token does not match auth code.'
       end
 
