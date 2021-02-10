@@ -184,8 +184,10 @@ module OmniAuth
         options[:redirect_uri] || callback_url
       end
 
-      def callback_url
-        full_host + script_name + callback_path
+      # https://github.com/omniauth/omniauth/blob/0d533c3615f7c54fa2b64d160fe7943c6fc52f78/lib/omniauth/strategy.rb#L459
+      def query_string
+        query_hash = Rack::Utils.parse_query(request.query_string).except('sso_flow')
+        query_hash.empty? ? '' : "?#{query_hash.to_query}"
       end
 
       ##
